@@ -1,0 +1,24 @@
+# Environment variables
+.env
+
+# IDEs
+.idea/
+.vscode/
+
+# Node
+node_modules/
+dist/
+
+# Maven
+target/
+
+node_modules/
+frontend/node_modules/
+backend/target/
+.env
+.env.*
+!.env.example
+.git/
+.idea/
+.vscode/
+.DS_Store
