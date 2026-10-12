@@ -70,7 +70,7 @@ public class RentalApplicationController {
     }
 
     @PutMapping("/{id}/accept")
-    
+    @PreAuthorize("hasRole('LANDLORD')")
     public ResponseEntity<Map<String, Object>> acceptApplication(
             @PathVariable UUID id,
             Authentication authentication) {
@@ -96,6 +96,7 @@ public class RentalApplicationController {
     }
 
     @PutMapping("/{id}/reject")
+    @PreAuthorize("hasRole('LANDLORD')")
     public ResponseEntity<Map<String, Object>> rejectApplication(
             @PathVariable UUID id,
             Authentication authentication) {

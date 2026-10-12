@@ -43,9 +43,9 @@ public class ReviewService {
         Rental rental = rentalRepository.findById(request.rentalId)
                 .orElseThrow(() -> new RuntimeException("Rental not found"));
 
-        if (rental.getStatus() == RentalStatus.CANCELLED) {
+        if (rental.getStatus() != RentalStatus.COMPLETED) {
             throw new RuntimeException(
-                    "Cancelled rentals cannot be reviewed"
+                    "Only completed rentals can be reviewed"
             );
         }
 
