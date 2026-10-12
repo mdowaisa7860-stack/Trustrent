@@ -88,7 +88,8 @@ public class RentalApplicationService {
         application.setStatus(ApplicationStatus.PENDING);
         application.setMessage(request.message);
 
-        return applicationRepository.save(application);
+        RentalApplication saved = applicationRepository.save(application);
+        return applicationRepository.findByIdWithDetails(saved.getId()).orElse(saved);
     }
 
     @Transactional(readOnly = true)
@@ -260,7 +261,8 @@ public List<RentalApplication> getLandlordApplications(String email) {
                 ApplicationStatus.REJECTED
         );
 
-        return applicationRepository.save(application);
+        RentalApplication saved = applicationRepository.save(application);
+        return applicationRepository.findByIdWithDetails(saved.getId()).orElse(saved);
     }
 
     private User findUserByEmail(String email) {

@@ -8,6 +8,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @Repository
@@ -17,6 +18,17 @@ public interface RentalApplicationRepository
     boolean existsByPropertyIdAndTenantId(
             UUID propertyId,
             UUID tenantId
+    );
+
+    @Query("""
+        SELECT a
+        FROM RentalApplication a
+        JOIN FETCH a.property
+        JOIN FETCH a.tenant
+        WHERE a.id = :id
+        """)
+    Optional<RentalApplication> findByIdWithDetails(
+            @Param("id") UUID id
     );
 
     @Query("""
