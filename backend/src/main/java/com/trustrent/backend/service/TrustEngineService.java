@@ -24,6 +24,12 @@ public class TrustEngineService {
 
     @Transactional
     public void recordEvent(User user, TrustEventType eventType, String referenceType, java.util.UUID referenceId, int scoreChange, String description) {
+
+        // Prevent duplicate trust events
+        if (referenceId != null && trustEventRepository.existsByUserIdAndEventTypeAndReferenceId(user.getId(), eventType, referenceId)) {
+            return;
+        }
+
         // 1. Record immutable trust event
         TrustEvent event = new TrustEvent();
         event.setUser(user);
@@ -42,9 +48,6 @@ public class TrustEngineService {
                     return newScore;
                 });
 
-        int updatedOverall = Math.max(0, Math.min(1000, trustScore.getScore() + scoreChange));
-        trustScore.setScore(updatedOverall);
-
         // Map specific event categories
         switch (eventType) {
             case RENT_PAID_EARLY:
@@ -57,9 +60,34 @@ public class TrustEngineService {
             case NEGATIVE_REVIEW:
                 trustScore.setReviewScore(Math.max(0, Math.min(1000, trustScore.getReviewScore() + scoreChange)));
                 break;
+            case RENTAL_COMPLETED:
+                trustScore.setRentalHistoryScore(Math.max(0, Math.min(1000, trustScore.getRentalHistoryScore() + scoreChange)));
+                break;
+            case COMPLIANCE_POSITIVE:
+            case COMPLIANCE_NEGATIVE:
+                trustScore.setComplianceScore(Math.max(0, Math.min(1000, trustScore.getComplianceScore() + scoreChange)));
+                break;
+            case PROPERTY_CARE_POSITIVE:
+            case PROPERTY_CARE_NEGATIVE:
+                trustScore.setCareScore(Math.max(0, Math.min(1000, trustScore.getCareScore() + scoreChange)));
+                break;
+            case VERIFIED_COMPLAINT:
+            case COMPLAINT_RESOLVED:
+                trustScore.setComplaintScore(Math.max(0, Math.min(1000, trustScore.getComplaintScore() + scoreChange)));
+                break;
             default:
                 break;
         }
+
+        // Apply Weights: Payment(40%), RentalHistory(30%), Reviews(20%), Care/Compliance(10%)
+        // We will average Care and Compliance to make up the 10%
+        int paymentWeight = (int) (trustScore.getPaymentScore() * 0.40);
+        int rentalHistoryWeight = (int) (trustScore.getRentalHistoryScore() * 0.30);
+        int reviewWeight = (int) (trustScore.getReviewScore() * 0.20);
+        int careComplianceWeight = (int) (((trustScore.getCareScore() + trustScore.getComplianceScore()) / 2.0) * 0.10);
+
+        int updatedOverall = paymentWeight + rentalHistoryWeight + reviewWeight + careComplianceWeight;
+        trustScore.setScore(Math.max(0, Math.min(1000, updatedOverall)));
 
         trustScore.setLastCalculatedAt(OffsetDateTime.now());
         trustScoreRepository.save(trustScore);

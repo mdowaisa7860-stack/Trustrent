@@ -8,7 +8,11 @@ import org.springframework.stereotype.Repository;
 import java.util.List;
 import java.util.UUID;
 
+import com.trustrent.backend.enums.TrustEventType;
+
 @Repository
 public interface TrustEventRepository extends JpaRepository<TrustEvent, UUID> {
     List<TrustEvent> findByUserOrderByCreatedAtDesc(User user);
+
+    boolean existsByUserIdAndEventTypeAndReferenceId(UUID userId, TrustEventType eventType, UUID referenceId);
 }

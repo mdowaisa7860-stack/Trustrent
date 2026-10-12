@@ -35,6 +35,16 @@ public class RentalController {
         return ResponseEntity.ok(response);
     }
 
+    @PutMapping("/{id}/complete")
+    @PreAuthorize("hasRole('LANDLORD')")
+    public ResponseEntity<Map<String, Object>> completeRental(
+            @PathVariable java.util.UUID id,
+            Authentication authentication) {
+
+        Rental rental = rentalService.completeRental(authentication.getName(), id);
+        return ResponseEntity.ok(rentalResponse(rental));
+    }
+
     @GetMapping("/landlord")
     @PreAuthorize("hasRole('LANDLORD')")
     public ResponseEntity<List<Map<String, Object>>> getLandlordRentals(
