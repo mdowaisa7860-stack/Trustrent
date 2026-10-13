@@ -10,7 +10,7 @@
 | **Applications** | PASS | `POST /api/applications` works correctly. Returns valid application info including Tenant and Property references. |
 | **Rentals** | PASS | `PUT /api/applications/{id}/accept` automatically transitions application to `ACTIVE` rental agreement successfully. |
 | **Monthly Rent Obligations & Payments** | PASS | `POST /api/payments` records payment info. Discovered JSON parse issue on `paymentMonth` due to `java.time.LocalDate` expecting fully formed "YYYY-MM-DD". Passing "2026-10-01" fixes it. API endpoint documented in PRD as `/api/rentals/{id}/payments`, but both frontend service mapping (`paymentService.js`) and backend controller actually use `POST /api/payments`. |
-| **Trust Score Calculation** | PASS | Server correctly applies weights via `TrustEngineService`. Hard boundaries enforce a score range of 0-1000. E2E check confirmed a `LATE` rent payment deducted 10 points. |
+| **Trust Score Calculation** | PASS | Server correctly applies weights via `TrustEngineService`. Hard boundaries enforce a score range of 0-1000. Manual curl check confirmed a `LATE` rent payment deducted 10 points. |
 | **Reviews** | PASS | Server-side validation restricts reviews to eligible rental relationships. Reviewing requires passing specific rating fields. Reviews updated landlord trust score correctly (+10 points). |
 | **Dashboards / History Pages** | PASS | `GET /api/trust/profile` correctly populates `TrustProfileResponse`. Frontend component tree confirms layout of Trust profiles and History screens for both Tenant and Landlord. |
 | **API Cross-Reference** | PASS | Frontend `services/*.js` align completely with Backend REST API. Methods, Paths, Headers correspond accurately. |
@@ -24,29 +24,37 @@ sudo service postgresql start
 sudo -u postgres psql -c "CREATE DATABASE trustrent_dev;"
 sudo -u postgres psql -c "ALTER USER postgres WITH PASSWORD 'postgres';"
 
-# Build & Run E2E Backend Tests
-export JWT_SECRET=$(echo -n "super-secret-key-that-is-at-least-32-bytes-long-for-jwt" | base64)
+# Build & Run Backend Tests
+export JWT_SECRET="$(openssl rand -base64 32)"
 cd backend && mvn clean test
 # Result: Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 10.65 s. Exit Code: 0
 
 # Build Frontend
 cd frontend && npm install && npm run build
 # Result: vite v8.2.2 building client environment for production. built in 496ms. Exit Code: 0
+
+# Manual Verification (executed manually via curl)
+# curl -X POST http://localhost:8080/api/auth/register ...
+# curl -X POST http://localhost:8080/api/properties ...
+# curl -X POST http://localhost:8080/api/applications ...
+# curl -X PUT  http://localhost:8080/api/applications/.../accept ...
+# curl -X POST http://localhost:8080/api/payments ...
+# curl -X POST http://localhost:8080/api/reviews ...
 ```
 
 ## 3. Bugs Fixed and Files Changed
 
-1. **JWT Key Length Check Bug (Fix applied via environment variable)**: The backend requires a >= 256-bit secure Base64 JWT Secret Key. The environment variable needed to be correctly set to a secure string.
+1. **JWT Key Length Check Bug (Fix applied via environment variable)**: The backend requires a >= 256-bit secure Base64 JWT Secret Key. The environment variable needed to be correctly set to a secure string. Secrets must never be committed.
 2. **Lazy Initialization Exception when creating a Review**: Fixed by introducing a `ReviewResponse` DTO that explicitly maps only necessary fields (UUIDs, rating integers, dates) from the `Review` entity. This ensures Hibernate Proxy initialization issues do not occur when Spring attempts to serialize nested database dependencies across lazy-load boundaries. Applied modifications to `ReviewController.java`.
-3. **Data Type Mismatches via Request Validation**: Payments endpoint strictly expects `java.time.LocalDate` for the `paymentMonth`. Handled in E2E payload formulation. Properties endpoint requires specific non-nullable property mappings (e.g. `propertyType`, `securityDeposit`).
+3. **Data Type Mismatches via Request Validation**: Payments endpoint strictly expects `java.time.LocalDate` for the `paymentMonth`. Handled in payload formulation. Properties endpoint requires specific non-nullable property mappings (e.g. `propertyType`, `securityDeposit`).
 
 ## 4. Remaining Items (Fail, Partial, Not Tested)
 
-- All V1 documented logic explicitly tested in the backend via automated unit tests and E2E curl simulation. No critical FAILs remain in logical data routing.
+- All V1 documented logic explicitly tested in the backend via manual API requests and verification via console output. Automated unit tests exist only for the basic application context context loads (`BackendApplicationTests.java`).
 - **Not Tested (Manual Verification Required):** The actual frontend visual rendering (UI layout in browser, click paths) could not be visually confirmed since a live preview environment was not fully interacted with via Cypress/Playwright, but the code architecture and tests confirm the data flows exist, match the app flow specifications, and the Vite build passes successfully.
 - Deployment remains strictly OUT OF SCOPE.
 
 ## 5. Security & Configuration Check
 
 - Checked `.gitignore` for standard exclusions (node_modules, target, logs).
-- Verified `application.properties` does not hardcode the real production `JWT_SECRET`.
+- Verified `application.properties` does not hardcode the real production `JWT_SECRET`. Secrets must be provided via the `JWT_SECRET` environment variable using a cryptographically secure random string.
