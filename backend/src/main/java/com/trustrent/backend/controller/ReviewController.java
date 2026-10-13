@@ -1,6 +1,7 @@
 package com.trustrent.backend.controller;
 
 import com.trustrent.backend.dto.ReviewRequest;
+import com.trustrent.backend.dto.ReviewResponse;
 import com.trustrent.backend.entity.Review;
 import com.trustrent.backend.service.ReviewService;
 import jakarta.validation.Valid;
@@ -11,6 +12,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/reviews")
@@ -25,49 +27,45 @@ public class ReviewController {
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     @PreAuthorize("hasAnyRole('TENANT','LANDLORD')")
-    public Review createReview(
+    public ReviewResponse createReview(
             Authentication authentication,
             @Valid @RequestBody ReviewRequest request
     ) {
-
-        return reviewService.createReview(
+        return new ReviewResponse(reviewService.createReview(
                 authentication.getName(),
                 request
-        );
+        ));
     }
 
     @GetMapping("/my")
     @PreAuthorize("hasAnyRole('TENANT','LANDLORD')")
-    public List<Review> getMyReviews(
+    public List<ReviewResponse> getMyReviews(
             Authentication authentication
     ) {
-
         return reviewService.getMyReviews(
                 authentication.getName()
-        );
+        ).stream().map(ReviewResponse::new).collect(Collectors.toList());
     }
 
     @GetMapping("/received")
     @PreAuthorize("hasAnyRole('TENANT','LANDLORD')")
-    public List<Review> getReceivedReviews(
+    public List<ReviewResponse> getReceivedReviews(
             Authentication authentication
     ) {
-
         return reviewService.getReceivedReviews(
                 authentication.getName()
-        );
+        ).stream().map(ReviewResponse::new).collect(Collectors.toList());
     }
 
     @GetMapping("/rental/{rentalId}")
     @PreAuthorize("hasAnyRole('TENANT','LANDLORD')")
-    public List<Review> getRentalReviews(
+    public List<ReviewResponse> getRentalReviews(
             Authentication authentication,
             @PathVariable UUID rentalId
     ) {
-
         return reviewService.getRentalReviews(
                 authentication.getName(),
                 rentalId
-        );
+        ).stream().map(ReviewResponse::new).collect(Collectors.toList());
     }
 }
