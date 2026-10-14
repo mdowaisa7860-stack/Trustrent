@@ -30,6 +30,11 @@ public class AuthController {
         return ResponseEntity.ok(authService.verifyOtp(request));
     }
 
+    @PostMapping("/resend-otp")
+    public ResponseEntity<RegisterResponse> resendOtp(@Valid @RequestBody com.trustrent.backend.dto.ResendOtpRequest request) {
+        return ResponseEntity.ok(authService.resendOtp(request.email));
+    }
+
     @PostMapping("/login")
     public ResponseEntity<AuthResponse> login(@Valid @RequestBody LoginRequest request) {
         return ResponseEntity.ok(authService.login(request));

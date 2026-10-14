@@ -42,6 +42,7 @@ public class RentalApplicationController {
     }
 
     @GetMapping("/my")
+    @org.springframework.transaction.annotation.Transactional(readOnly = true)
     public ResponseEntity<List<Map<String, Object>>> getMyApplications(
             Authentication authentication) {
 
@@ -56,6 +57,7 @@ public class RentalApplicationController {
     }
 
     @GetMapping("/landlord")
+    @org.springframework.transaction.annotation.Transactional(readOnly = true)
     public ResponseEntity<List<Map<String, Object>>> getLandlordApplications(
             Authentication authentication) {
 

@@ -4,7 +4,7 @@ import { useAuth } from "../../context/AuthContext";
 
 export default function Register() {
   const navigate = useNavigate();
-  const { register, verifyOtp } = useAuth();
+  const { register, verifyOtp, resendOtp } = useAuth();
 
   const [form, setForm] = useState({
     name: "",
@@ -66,6 +66,23 @@ export default function Register() {
         err.response?.data?.message ||
           err.response?.data ||
           "Verification failed."
+      );
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function handleResendOtp() {
+    setError("");
+    setLoading(true);
+    try {
+      const response = await resendOtp(form.email);
+      setDevOtp(response.devOtp);
+    } catch (err) {
+      setError(
+        err.response?.data?.message ||
+          err.response?.data ||
+          "Failed to resend OTP."
       );
     } finally {
       setLoading(false);
@@ -200,6 +217,17 @@ export default function Register() {
               >
                 {loading ? "Verifying..." : "Verify & Continue"}
               </button>
+
+              <div className="mt-4 text-center">
+                <button
+                  type="button"
+                  onClick={handleResendOtp}
+                  disabled={loading}
+                  className="text-sm font-medium text-gray-600 underline hover:text-black"
+                >
+                  Resend Code
+                </button>
+              </div>
             </form>
           )}
 

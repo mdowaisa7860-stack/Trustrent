@@ -42,6 +42,7 @@ public class RentalPaymentController {
 
     @GetMapping("/rental/{rentalId}")
     @PreAuthorize("hasAnyRole('TENANT','LANDLORD')")
+    @org.springframework.transaction.annotation.Transactional(readOnly = true)
     public ResponseEntity<List<Map<String, Object>>> getRentalHistory(
             @PathVariable UUID rentalId,
             Authentication authentication) {
@@ -61,6 +62,7 @@ public class RentalPaymentController {
 
     @GetMapping("/my")
     @PreAuthorize("hasRole('TENANT')")
+    @org.springframework.transaction.annotation.Transactional(readOnly = true)
     public ResponseEntity<List<Map<String, Object>>> getMyPayments(
             Authentication authentication) {
 

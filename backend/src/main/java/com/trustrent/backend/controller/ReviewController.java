@@ -39,6 +39,7 @@ public class ReviewController {
 
     @GetMapping("/my")
     @PreAuthorize("hasAnyRole('TENANT','LANDLORD')")
+    @org.springframework.transaction.annotation.Transactional(readOnly = true)
     public List<ReviewResponse> getMyReviews(
             Authentication authentication
     ) {
@@ -49,6 +50,7 @@ public class ReviewController {
 
     @GetMapping("/received")
     @PreAuthorize("hasAnyRole('TENANT','LANDLORD')")
+    @org.springframework.transaction.annotation.Transactional(readOnly = true)
     public List<ReviewResponse> getReceivedReviews(
             Authentication authentication
     ) {
@@ -59,6 +61,7 @@ public class ReviewController {
 
     @GetMapping("/rental/{rentalId}")
     @PreAuthorize("hasAnyRole('TENANT','LANDLORD')")
+    @org.springframework.transaction.annotation.Transactional(readOnly = true)
     public List<ReviewResponse> getRentalReviews(
             Authentication authentication,
             @PathVariable UUID rentalId

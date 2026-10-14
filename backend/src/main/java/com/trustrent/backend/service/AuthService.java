@@ -87,6 +87,28 @@ public class AuthService {
     }
 
     @Transactional
+    public RegisterResponse resendOtp(String email) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("User not found."));
+
+        if (user.isEmailVerified()) {
+            throw new RuntimeException("Email is already verified.");
+        }
+
+        verificationTokenRepository.deleteByEmail(email);
+
+        String otp = String.format("%06d", new java.security.SecureRandom().nextInt(1000000));
+
+        VerificationToken token = new VerificationToken();
+        token.setEmail(email);
+        token.setToken(otp);
+        token.setExpiryDate(OffsetDateTime.now().plusMinutes(15));
+        verificationTokenRepository.save(token);
+
+        return new RegisterResponse("OTP resent successfully.", email, otp);
+    }
+
+    @Transactional
     public AuthResponse verifyOtp(OtpVerificationRequest request) {
         VerificationToken token = verificationTokenRepository.findByEmailAndToken(request.email, request.otp)
                 .orElseThrow(() -> new RuntimeException("Invalid or expired OTP."));

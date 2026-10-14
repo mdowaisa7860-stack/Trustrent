@@ -19,6 +19,7 @@ public class TrustController {
     }
 
     @GetMapping("/profile")
+    @org.springframework.transaction.annotation.Transactional(readOnly = true)
     public ResponseEntity<TrustProfileResponse> getMyTrustProfile(
             Authentication authentication) {
 

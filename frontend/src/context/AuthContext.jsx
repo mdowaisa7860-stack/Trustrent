@@ -45,6 +45,11 @@ export function AuthProvider({ children }) {
     return response.data;
   }
 
+  async function resendOtp(email) {
+    const response = await api.post("/auth/resend-otp", { email });
+    return response.data;
+  }
+
   async function verifyOtp(email, otp) {
     const response = await api.post("/auth/verify-otp", {
       email,

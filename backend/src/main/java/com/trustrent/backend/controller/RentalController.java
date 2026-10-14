@@ -23,6 +23,7 @@ public class RentalController {
 
     @GetMapping("/my")
     @PreAuthorize("hasRole('TENANT')")
+    @org.springframework.transaction.annotation.Transactional(readOnly = true)
     public ResponseEntity<List<RentalResponse>> getMyRentals(
             Authentication authentication) {
 
@@ -37,6 +38,7 @@ public class RentalController {
 
     @GetMapping("/landlord")
     @PreAuthorize("hasRole('LANDLORD')")
+    @org.springframework.transaction.annotation.Transactional(readOnly = true)
     public ResponseEntity<List<RentalResponse>> getLandlordRentals(
             Authentication authentication) {
 
