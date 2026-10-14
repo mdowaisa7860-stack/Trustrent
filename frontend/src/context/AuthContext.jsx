@@ -40,7 +40,16 @@ export function AuthProvider({ children }) {
   }
 
   async function register(data) {
+    // Only returns the message and mock OTP, does not log in yet
     const response = await api.post("/auth/register", data);
+    return response.data;
+  }
+
+  async function verifyOtp(email, otp) {
+    const response = await api.post("/auth/verify-otp", {
+      email,
+      otp,
+    });
 
     const userData = response.data;
 
@@ -65,6 +74,7 @@ export function AuthProvider({ children }) {
         loading,
         login,
         register,
+        verifyOtp,
         logout,
         isAuthenticated: Boolean(user),
       }}

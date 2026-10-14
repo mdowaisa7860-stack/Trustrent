@@ -1,7 +1,10 @@
 package com.trustrent.backend.controller;
+
 import com.trustrent.backend.dto.AuthResponse;
 import com.trustrent.backend.dto.LoginRequest;
+import com.trustrent.backend.dto.OtpVerificationRequest;
 import com.trustrent.backend.dto.RegisterRequest;
+import com.trustrent.backend.dto.RegisterResponse;
 import com.trustrent.backend.service.AuthService;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
@@ -18,8 +21,13 @@ public class AuthController {
     }
 
     @PostMapping("/register")
-    public ResponseEntity<AuthResponse> register(@Valid @RequestBody RegisterRequest request) {
+    public ResponseEntity<RegisterResponse> register(@Valid @RequestBody RegisterRequest request) {
         return ResponseEntity.ok(authService.register(request));
+    }
+
+    @PostMapping("/verify-otp")
+    public ResponseEntity<AuthResponse> verifyOtp(@Valid @RequestBody OtpVerificationRequest request) {
+        return ResponseEntity.ok(authService.verifyOtp(request));
     }
 
     @PostMapping("/login")

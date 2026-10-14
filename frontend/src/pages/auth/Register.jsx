@@ -4,7 +4,7 @@ import { useAuth } from "../../context/AuthContext";
 
 export default function Register() {
   const navigate = useNavigate();
-  const { register } = useAuth();
+  const { register, verifyOtp } = useAuth();
 
   const [form, setForm] = useState({
     name: "",
@@ -15,6 +15,11 @@ export default function Register() {
 
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+
+  // OTP State
+  const [step, setStep] = useState(1); // 1 = Registration form, 2 = OTP form
+  const [otp, setOtp] = useState("");
+  const [devOtp, setDevOtp] = useState("");
 
   function handleChange(e) {
     setForm({
@@ -29,13 +34,9 @@ export default function Register() {
     setLoading(true);
 
     try {
-      const user = await register(form);
-
-      if (user.role === "LANDLORD") {
-        navigate("/landlord/dashboard");
-      } else {
-        navigate("/tenant/dashboard");
-      }
+      const response = await register(form);
+      setDevOtp(response.devOtp); // For development display only
+      setStep(2);
     } catch (err) {
       setError(
         err.response?.data?.message ||
@@ -47,16 +48,42 @@ export default function Register() {
     }
   }
 
+  async function handleVerify(e) {
+    e.preventDefault();
+    setError("");
+    setLoading(true);
+
+    try {
+      const user = await verifyOtp(form.email, otp);
+
+      if (user.role === "LANDLORD") {
+        navigate("/landlord/dashboard");
+      } else {
+        navigate("/tenant/dashboard");
+      }
+    } catch (err) {
+      setError(
+        err.response?.data?.message ||
+          err.response?.data ||
+          "Verification failed."
+      );
+    } finally {
+      setLoading(false);
+    }
+  }
+
   return (
     <main className="flex-1">
       <div className="mx-auto flex min-h-[75vh] max-w-md items-center px-6 py-12">
         <div className="w-full rounded-2xl border border-[var(--border)] bg-white p-8 shadow-sm">
           <h1 className="text-3xl font-bold text-[var(--text)]">
-            Create your account
+            {step === 1 ? "Create your account" : "Verify your email"}
           </h1>
 
           <p className="mt-2 text-[var(--text-secondary)]">
-            Join TrustRent and build your rental reputation.
+            {step === 1
+              ? "Join TrustRent and build your rental reputation."
+              : "We've sent a 6-digit code to your email."}
           </p>
 
           {error && (
@@ -65,90 +92,128 @@ export default function Register() {
             </div>
           )}
 
-          <form onSubmit={handleSubmit} className="mt-6 space-y-5">
-            <div>
-              <label className="mb-2 block text-sm font-medium">
-                Full Name
-              </label>
+          {step === 1 ? (
+            <form onSubmit={handleSubmit} className="mt-6 space-y-5">
+              <div>
+                <label className="mb-2 block text-sm font-medium">
+                  Full Name
+                </label>
 
-              <input
-                type="text"
-                name="name"
-                value={form.name}
-                onChange={handleChange}
-                required
-                className="w-full rounded-lg border border-gray-300 px-4 py-3 outline-none focus:border-black"
-                placeholder="Your name"
-              />
-            </div>
+                <input
+                  type="text"
+                  name="name"
+                  value={form.name}
+                  onChange={handleChange}
+                  required
+                  className="w-full rounded-lg border border-gray-300 px-4 py-3 outline-none focus:border-black"
+                  placeholder="Your name"
+                />
+              </div>
 
-            <div>
-              <label className="mb-2 block text-sm font-medium">
-                Email
-              </label>
+              <div>
+                <label className="mb-2 block text-sm font-medium">
+                  Email
+                </label>
 
-              <input
-                type="email"
-                name="email"
-                value={form.email}
-                onChange={handleChange}
-                required
-                className="w-full rounded-lg border border-gray-300 px-4 py-3 outline-none focus:border-black"
-                placeholder="you@example.com"
-              />
-            </div>
+                <input
+                  type="email"
+                  name="email"
+                  value={form.email}
+                  onChange={handleChange}
+                  required
+                  className="w-full rounded-lg border border-gray-300 px-4 py-3 outline-none focus:border-black"
+                  placeholder="you@example.com"
+                />
+              </div>
 
-            <div>
-              <label className="mb-2 block text-sm font-medium">
-                Password
-              </label>
+              <div>
+                <label className="mb-2 block text-sm font-medium">
+                  Password
+                </label>
 
-              <input
-                type="password"
-                name="password"
-                value={form.password}
-                onChange={handleChange}
-                required
-                minLength={6}
-                className="w-full rounded-lg border border-gray-300 px-4 py-3 outline-none focus:border-black"
-                placeholder="Create a password"
-              />
-            </div>
+                <input
+                  type="password"
+                  name="password"
+                  value={form.password}
+                  onChange={handleChange}
+                  required
+                  minLength={6}
+                  className="w-full rounded-lg border border-gray-300 px-4 py-3 outline-none focus:border-black"
+                  placeholder="Create a password"
+                />
+              </div>
 
-            <div>
-              <label className="mb-2 block text-sm font-medium">
-                I am a
-              </label>
+              <div>
+                <label className="mb-2 block text-sm font-medium">
+                  I am a
+                </label>
 
-              <select
-                name="role"
-                value={form.role}
-                onChange={handleChange}
-                className="w-full rounded-lg border border-gray-300 px-4 py-3 outline-none focus:border-black"
+                <select
+                  name="role"
+                  value={form.role}
+                  onChange={handleChange}
+                  className="w-full rounded-lg border border-gray-300 px-4 py-3 outline-none focus:border-black"
+                >
+                  <option value="TENANT">Tenant</option>
+                  <option value="LANDLORD">Landlord</option>
+                </select>
+              </div>
+
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full rounded-lg bg-black px-4 py-3 font-semibold text-white transition hover:opacity-90 disabled:opacity-50"
               >
-                <option value="TENANT">Tenant</option>
-                <option value="LANDLORD">Landlord</option>
-              </select>
-            </div>
+                {loading ? "Creating account..." : "Create Account"}
+              </button>
+            </form>
+          ) : (
+            <form onSubmit={handleVerify} className="mt-6 space-y-5">
 
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full rounded-lg bg-black px-4 py-3 font-semibold text-white transition hover:opacity-90 disabled:opacity-50"
-            >
-              {loading ? "Creating account..." : "Create Account"}
-            </button>
-          </form>
+              {/* DEV ONLY: Show OTP for ease of testing */}
+              {devOtp && (
+                 <div className="rounded bg-yellow-50 p-3 text-xs text-yellow-800 mb-4 border border-yellow-200">
+                    <span className="font-bold">DEV MODE:</span> Your OTP is {devOtp}
+                 </div>
+              )}
 
-          <p className="mt-6 text-center text-sm text-[var(--text-secondary)]">
-            Already have an account?{" "}
-            <Link
-              to="/login"
-              className="font-semibold text-[var(--text)] underline"
-            >
-              Sign in
-            </Link>
-          </p>
+              <div>
+                <label className="mb-2 block text-sm font-medium">
+                  Verification Code
+                </label>
+                <input
+                  type="text"
+                  name="otp"
+                  value={otp}
+                  onChange={(e) => setOtp(e.target.value)}
+                  required
+                  maxLength={6}
+                  className="w-full rounded-lg border border-gray-300 px-4 py-3 outline-none focus:border-black text-center tracking-[0.5em] text-lg font-bold"
+                  placeholder="------"
+                />
+              </div>
+
+              <button
+                type="submit"
+                disabled={loading || otp.length !== 6}
+                className="w-full rounded-lg bg-black px-4 py-3 font-semibold text-white transition hover:opacity-90 disabled:opacity-50"
+              >
+                {loading ? "Verifying..." : "Verify & Continue"}
+              </button>
+            </form>
+          )}
+
+          {step === 1 && (
+            <p className="mt-6 text-center text-sm text-[var(--text-secondary)]">
+              Already have an account?{" "}
+              <Link
+                to="/login"
+                className="font-semibold text-[var(--text)] underline"
+              >
+                Sign in
+              </Link>
+            </p>
+          )}
         </div>
       </div>
     </main>
